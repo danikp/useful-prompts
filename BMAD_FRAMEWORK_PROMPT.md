@@ -54,6 +54,7 @@ Create these documents by analyzing the actual codebase (don't make up informati
 - Target users/personas
 - Core features (what exists today)
 - Non-functional requirements (performance, scale, browser support)
+- Accessibility requirements (WCAG 2.1 AA compliance targets, assistive technology support, keyboard navigation, screen reader compatibility, color contrast ratios)
 - Out of scope (what this project deliberately doesn't do)
 - Success metrics
 
@@ -116,7 +117,7 @@ Create 3-5 persona files based on the types of work this project needs. Each per
 
 Then create additional personas that match the project's tech stack. Examples:
 - `data-engineer.md` — for data pipeline / ETL work
-- `frontend-dev.md` — for UI / website work
+- `frontend-dev.md` — for UI / website work. **Must include an "Accessibility Validation" section** in the persona's workflow with rules covering: semantic HTML (correct elements, no `<div>`/`<span>` for interactive controls), keyboard navigation (Tab/Shift+Tab/Enter/Space/Escape, logical tab order), ARIA attributes (use only when semantic HTML is insufficient — no ARIA is better than bad ARIA), color contrast (WCAG 2.1 AA: 4.5:1 normal text, 3:1 large text), screen reader compatibility (alt text, heading hierarchy, `aria-live` for dynamic content), focus management (modal focus trap, return focus on close, route-change focus), form accessibility (associated `<label>` elements, linked error messages, `aria-required`), and automated checks (eslint-plugin-jsx-a11y, axe-core, Lighthouse, or equivalent). Every frontend story must pass this validation before it can be marked complete.
 - `backend-dev.md` — for API / server work
 - `reviewer.md` — for code review and QA
 - `devops.md` — for CI/CD and deployment
@@ -168,6 +169,9 @@ The "Documentation Framework" section should list the key documents:
 
 The "Agent Workflow Rules" section should contain these mandatory rules for every agent:
 
+**Communication principle (applies to ALL phases below):**
+On every important decision — architectural choices, scope trade-offs, ambiguous requirements, multiple valid approaches — **stop and ask the user before proceeding**. Present the alternatives with pros/cons and a clear recommendation. Never silently pick an option when the choice materially affects the outcome. This applies during requirements analysis, implementation, code review, and any other phase. Silent assumptions are the most expensive kind of rework.
+
 **Before starting work:**
 1. Read guidelines (this file)
 2. Read the relevant docs (PRD, architecture, data dictionary as needed)
@@ -183,13 +187,26 @@ The "Agent Workflow Rules" section should contain these mandatory rules for ever
 **During implementation work:**
 9. If task management MCP tools are available (Jira, Asana, Linear, etc.), use them to read assigned tasks and update status
 10. Follow the epic's story checklist
+11. **Ask before you assume** — when facing important decisions (architectural choices, scope trade-offs, ambiguous requirements, multiple valid approaches), stop and ask the user. Present the options with pros/cons and a recommendation rather than silently picking one.
+
+**Accessibility validation (mandatory for all frontend work):**
+12. Follow the accessibility validation rules defined in the relevant frontend persona (e.g., `.ai/personas/frontend-dev.md`). No frontend story is complete until it passes validation.
+
+**Self Code Review (mandatory for all developers before completing work):**
+Every developer must perform a self code review before marking any story or task as complete. This catches issues early and ensures alignment with project standards.
+13. **Coding standards** — review your changes against the project's conventions (naming, file organization, patterns documented in guidelines). Fix any deviations.
+14. **Code quality** — check for dead code, unused imports, console.log statements, hardcoded values, duplicated logic, and overly complex functions. Simplify where possible.
+15. **Error handling** — verify that edge cases are handled, error states are surfaced to the user, and no errors are silently swallowed.
+16. **Security** — check for injection vulnerabilities (XSS, SQL injection), exposed secrets, and unsafe data handling. Sanitize user input at system boundaries.
+17. **Readability** — ensure code is understandable without explanation. If a block of logic is not self-evident, add a brief comment explaining *why* (not *what*).
+18. **Diff review** — run `git diff` and read through every changed line as if reviewing someone else's code. Look for accidental changes, leftover debug code, and unintended side effects.
 
 **After completing work:**
-11. Update the epic — mark completed stories as `[x]`, change status if all done
-12. Update architecture/data-dictionary docs if you made structural changes
-13. Update guidelines if you introduced new commands or conventions
-14. Log known issues discovered during work to the relevant epic
-15. Create follow-up epics if your work revealed new work to be done
+19. Update the epic — mark completed stories as `[x]`, change status if all done
+20. Update architecture/data-dictionary docs if you made structural changes
+21. Update guidelines if you introduced new commands or conventions
+22. Log known issues discovered during work to the relevant epic
+23. Create follow-up epics if your work revealed new work to be done
 
 These rules ensure documentation stays current and no agent starts from scratch.
 
@@ -203,7 +220,10 @@ These rules ensure documentation stays current and no agent starts from scratch.
 - **Use checklists**: For epics and stories, use `- [x]` (done) and `- [ ]` (not done) format.
 - **TypeScript for schemas**: When documenting data structures, use TypeScript interface notation.
 - **Docs are living documents**: The framework prompt creates initial docs, but agents must keep them updated. Stale docs are worse than no docs.
+- **Ask questions, propose alternatives**: On every important decision — architecture, scope, trade-offs, ambiguous requirements — ask the user before proceeding. Present options with pros/cons and a recommendation. Silent assumptions are the most expensive kind of rework.
 - **Product Owner gates implementation**: No epic should move to IN_PROGRESS without stories and acceptance criteria written by the product owner persona.
+- **Accessibility is not optional**: Every frontend story must pass the accessibility validation defined in the frontend persona before it can be marked complete. Accessibility debt is treated the same as a bug — it blocks completion.
+- **Self code review before done**: Every developer must review their own changes against coding standards and quality checks before marking work as complete. No story moves to done without a self-review pass.
 
 ### 7. Output a Change Summary
 
