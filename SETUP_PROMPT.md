@@ -44,7 +44,7 @@ Then create thin pointer files for every major AI coding agent, each containing 
 | `CONVENTIONS.md` | Generic fallback |
 
 Each pointer file should contain one line:
-"Read .ai/guidelines.md for full project guidelines, architecture, commands, and conventions."
+"Read and strictly follow .ai/guidelines.md for full project guidelines, architecture, commands, and conventions."
 
 If any of these files already exist with real content, merge their content into `.ai/guidelines.md` first, then replace the original with the pointer.
 ```
