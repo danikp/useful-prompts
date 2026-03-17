@@ -1,233 +1,344 @@
 # Prompt: Set Up BMAD-Lite Documentation Framework
 
-Use this prompt with any AI coding agent to set up a lightweight, BMAD-inspired documentation framework in a repository. Run this **after** `.ai/guidelines.md` exists (see `SETUP_PROMPT.md` to create it first).
+Use this prompt with any AI coding agent to set up a BMAD-inspired documentation framework. Run **after** `.ai/guidelines.md` exists (see `SETUP_PROMPT.md`).
+
+**Re-run this prompt** when any of these occur:
+- A new major feature is added (3+ new files)
+- A dependency is added or removed
+- The project structure changes (new directories)
+- More than 20 commits since last run
 
 ---
 
 ## The Prompt
 
+````
+Set up a BMAD-lite documentation framework under `.ai/`.
+
+### PREREQUISITE CHECK
+
+Read `.ai/guidelines.md`.
+- IF it exists → continue.
+- IF it does NOT exist → STOP. Tell the user: "Run SETUP_PROMPT.md first to create .ai/guidelines.md." Do not proceed.
+
+### RUN MODE DETECTION
+
+Check if `.ai/docs/prd.md` exists.
+- IF it exists → this is a REPEAT RUN. In each phase, also follow the "REPEAT RUN" instructions.
+- IF it does NOT exist → this is a FIRST RUN. Ignore all "REPEAT RUN" blocks.
+
+---
+
+## Named Rules
+
+Define once, referenced by name throughout. Every agent must know these.
+
+**RULE-ASK**: On important decisions (architecture, scope, trade-offs, ambiguous requirements, multiple valid approaches), STOP and ask the user. Present alternatives with pros/cons and a recommendation. Never silently pick an option.
+
+**RULE-A11Y**: Accessibility validation checklist for frontend work:
+- Semantic HTML: correct elements; no `<div>`/`<span>` for interactive controls
+- Keyboard navigation: Tab/Shift+Tab/Enter/Space/Escape; logical tab order
+- ARIA: use only when semantic HTML is insufficient; no ARIA is better than bad ARIA
+- Color contrast: WCAG 2.1 AA — 4.5:1 normal text, 3:1 large text
+- Screen readers: alt text, heading hierarchy, `aria-live` for dynamic content
+- Focus management: modal focus trap, return focus on close, route-change focus
+- Forms: associated `<label>`, linked error messages, `aria-required`
+- Automated checks: eslint-plugin-jsx-a11y, axe-core, Lighthouse, or equivalent
+
+**RULE-SELF-REVIEW**: Self code review before marking any task complete:
+1. Coding standards — check against conventions in guidelines.md. Fix deviations.
+2. Code quality — no dead code, unused imports, console.log, hardcoded values, duplication.
+3. Error handling — edge cases handled, errors surfaced, none silently swallowed.
+4. Security — no injection vulnerabilities, no exposed secrets, input sanitized at boundaries.
+5. Readability — code understandable without explanation. Brief *why* comments only where non-obvious.
+6. Diff review — run `git diff`, read every line. No accidental changes, debug code, or side effects.
+
+**RULE-PERSONA**: Before starting ANY task, output:
 ```
-Analyze this codebase and set up a BMAD-lite documentation framework under `.ai/`.
+PERSONA: [persona name]
+CONTEXT LOADED: [list of .ai/ files read]
+TASK: [one-line description]
+```
+If you cannot identify the correct persona, STOP and ask the user.
 
-This framework organizes all project knowledge so any AI agent can pick up work without context loss. It is inspired by the BMAD (Breakthrough Method for Agile AI-Driven Development) framework but right-sized for small-team projects.
+**RULE-PO-GATE**: Before writing any implementation code, verify ALL:
+- [ ] Product Owner persona completed requirements analysis
+- [ ] Stories exist in an epic with acceptance criteria
+- [ ] Execution prompt exists in `.ai/prompts/`
+If any is unchecked, STOP. Switch to Product Owner persona first.
 
-Read `.ai/guidelines.md` first to understand the project. Then follow these steps in order:
+---
 
-### 0. Research Phase — Understand the Full Picture
+## Persona-Task Mapping
 
-Before creating any documents, gather context from ALL available sources:
+| Task type | Required persona | Gate |
+|-----------|-----------------|------|
+| New feature request | product-owner | RULE-PO-GATE |
+| Bug fix (known cause) | matching developer | None |
+| Bug fix (unknown cause) | product-owner → developer | PO triages first |
+| Code review | reviewer | None |
+| Deployment | devops | All tests passing |
+| UI/frontend work | frontend-dev | RULE-A11Y required |
 
-**Git history**: Run `git log --oneline -50` and `git log --all --oneline --graph -30` to understand:
-- What has been built and in what order
-- What phases/milestones have been completed
-- Who contributed what (human vs. agent work)
-- Any reverts, fixes, or abandoned approaches
+---
 
-For deeper analysis, use `git log --stat -20` to see which files changed in recent commits, and `git log --diff-filter=A --name-only --format=""` to find when files were first added.
+=== PHASE 1: RESEARCH ===
 
-**Task management / MCP tools**: Check if any task management MCP servers are available (Atlassian Jira, Asana, Linear, GitHub Projects, Trello, etc.). To check:
-- Look at `.mcp.json` in the project root or user home directory
-- Check available MCP tool listings
-- If a task management tool IS available: read open tasks, sprints, backlogs, and completed items. Use this to populate epics and stories with accurate status. Reference ticket IDs in epic files.
-- If NO task management tool is available: rely on git history, TODOs in code, and codebase analysis.
+Gather context from all available sources before creating documents.
 
-**GitHub/GitLab issues and PRs**: If the repo is hosted on GitHub/GitLab, check for open issues and pull requests using `gh issue list` or `gh pr list` to find planned or in-progress work.
+1. **Git history**: Run `git log --oneline -50` and `git log --all --oneline --graph -30`.
+   For deeper analysis: `git log --stat -20` and `git log --diff-filter=A --name-only --format=""`.
+   Note: what was built, build order, completed milestones, reverts, abandoned approaches.
 
-**TODOs in code**: Search for `TODO`, `FIXME`, `HACK`, `XXX` comments in the codebase to find known technical debt and planned improvements.
+2. **Task management**: Run `ls .mcp.json 2>/dev/null && cat .mcp.json`.
+   - IF file exists AND contains task management tools (Jira, Asana, Linear, Trello, GitHub Projects) → read open tasks, sprints, backlogs, completed items.
+   - ELSE → skip. Rely on git history, TODOs, and codebase analysis.
 
-Then create the following structure:
+3. **GitHub/GitLab issues**: Run `gh issue list` and `gh pr list`. If commands fail, skip.
 
-### 1. Framework README — `.ai/README.md`
+4. **TODOs in code**: Search for `TODO`, `FIXME`, `HACK`, `XXX` comments.
 
-Explain the `.ai/` directory structure, what each subdirectory contains, and how agents should use it. Include:
-- Directory tree with descriptions
+**Deliverable**: Write findings to `.ai/_research.md` (temporary working file).
+**Checkpoint**: List what you found before proceeding.
+
+=== PHASE 1 COMPLETE. Proceed to Phase 2. ===
+
+---
+
+=== PHASE 2: CORE DOCUMENTATION ===
+
+Create these files under `.ai/docs/` by analyzing the actual codebase. Do not invent information.
+
+### 2.1 Framework README — `.ai/README.md`
+- Directory tree of `.ai/` with descriptions
 - How to start a new agent session (which files to read)
-- How to add a new feature/phase (create epic + prompt)
-- When to use which persona
+- How to add a new feature (create epic + prompt)
+- Persona-Task Mapping reference
 
-### 2. Project Documentation — `.ai/docs/`
-
-Create these documents by analyzing the actual codebase (don't make up information):
-
-**`.ai/docs/prd.md`** — Product Requirements Document:
+### 2.2 Product Requirements — `.ai/docs/prd.md`
 - Product overview (what it is, who it's for)
 - Target users/personas
 - Core features (what exists today)
 - Non-functional requirements (performance, scale, browser support)
-- Accessibility requirements (WCAG 2.1 AA compliance targets, assistive technology support, keyboard navigation, screen reader compatibility, color contrast ratios)
+- Accessibility requirements (reference RULE-A11Y)
 - Out of scope (what this project deliberately doesn't do)
 - Success metrics
 
-**`.ai/docs/architecture.md`** — Technical Architecture:
+### 2.3 Technical Architecture — `.ai/docs/architecture.md`
 - System overview diagram (ASCII art showing data flow)
 - Component architecture (how parts connect)
 - Key technical decisions with rationale
 - Scale considerations
 - Technology stack with version info
 
-**`.ai/docs/data-dictionary.md`** — Data Schema Reference (if applicable):
-- All data models/schemas with TypeScript-style type definitions
-- Input/output file descriptions with sizes
-- Known data quirks or edge cases
-- Relationships between data entities
+### 2.4 Data Dictionary — `.ai/docs/data-dictionary.md`
+- Create IF the project has database schemas, API request/response types, or structured data files.
+- SKIP IF the project has no data persistence or structured I/O.
+- Contents: data models with TypeScript-style types, I/O descriptions, data quirks, entity relationships.
 
-### 3. Feature Epics — `.ai/epics/`
+**REPEAT RUN**: Read each existing doc. Only update if file paths/commands/versions changed, new features were added, or factual errors exist. Do NOT rewrite accurate sections. Do NOT remove user-added content.
 
-Create one epic file per major feature area or project phase. Name them `epic-NN-short-name.md`.
+**Deliverable**: Files listed above.
+**Checkpoint**: List created/updated files before proceeding.
 
-For each epic include:
-- **Status**: COMPLETED, IN_PROGRESS, or PLANNED
+=== PHASE 2 COMPLETE. Proceed to Phase 3. ===
+
+---
+
+=== PHASE 3: FEATURE EPICS ===
+
+Create one epic per major feature area under `.ai/epics/`. Name: `epic-NN-short-name.md`.
+
+**Feature area** = a distinct group of 3+ related files serving one purpose.
+
+Each epic must include:
+- **Status**: `COMPLETED` | `IN_PROGRESS` | `PLANNED`
 - **Summary**: What this epic delivers
-- **Stories/tasks**: Checklist of specific deliverables (checked if done)
-- **Key files**: Which files are most relevant
-- **Known issues**: Any bugs or limitations
+- **Stories/tasks**: `- [x]` done, `- [ ]` not done. Each story MUST have acceptance criteria.
+- **Key files**: Most relevant source files
+- **Known issues**: Bugs or limitations
 - **Dependencies**: What must be done before/after
 
-Use git history, codebase and task management tools to determine accurate status. Create at least:
+Minimum required:
 - One epic per completed feature area
 - One epic for the most obvious next phase of work
 
-### 4. Agent Personas — `.ai/personas/`
+Use git history and `.ai/_research.md` data to determine accurate status.
 
-Create 3-5 persona files based on the types of work this project needs. Each persona should include:
+**REPEAT RUN**: Read all existing epics first. Update story checklists to match implementation state (verify via git log). Add new epics only for uncovered areas. Do NOT remove or overwrite existing epics.
+
+**Deliverable**: `.ai/epics/epic-NN-*.md` files.
+**Checkpoint**: List all epics with status before proceeding.
+
+=== PHASE 3 COMPLETE. Proceed to Phase 4. ===
+
+---
+
+=== PHASE 4: AGENT PERSONAS ===
+
+Create one persona per distinct role under `.ai/personas/`.
+Minimum: Product Owner + one developer persona. Maximum: 6.
+Choose roles based on languages and frameworks in the tech stack.
+
+Each persona file must include:
 - **Role**: One-line description
 - **Context to load**: Which `.ai/` files to read before starting
 - **Principles**: 3-7 rules specific to this role in this project
-- **Key commands**: Most-used terminal commands for this work
+- **Key commands**: Most-used terminal commands
 - **Common tasks**: What this persona typically works on
 
-**IMPORTANT — Always create a Product Owner persona** (`product-owner.md`). This persona is the gateway for all new work. It must include:
+### 4.1 MANDATORY — Product Owner (`product-owner.md`)
 
-- **Role**: Product owner responsible for analyzing requirements, clarifying scope, and writing stories before any implementation begins.
-- **Context to load**: PRD, architecture, all epics (to understand current state)
-- **Workflow** — the product owner follows this sequence for every new feature or change request:
-  1. **Analyze the request** — understand what the user is asking for, identify ambiguities
-  2. **Ask clarifying questions** — never assume. Ask the user about scope, priorities, edge cases, acceptance criteria, and trade-offs before proceeding
-  3. **Check existing docs** — review PRD, architecture, and epics to see how the request fits with what exists
-  4. **Write or update the PRD** — if the request introduces new product requirements, update `.ai/docs/prd.md`
-  5. **Write stories** — break the request into concrete, implementable stories with acceptance criteria. Add them to an existing epic or create a new one in `.ai/epics/`
-  6. **Write or update the execution prompt** — create a detailed prompt in `.ai/prompts/` that a developer persona can follow to implement the stories
-  7. **Hand off** — only after stories are written and approved does work move to a developer persona
+This persona gates all new work (see RULE-PO-GATE).
+
+- **Role**: Analyzes requirements, clarifies scope, writes stories before implementation.
+- **Context to load**: PRD, architecture, all epics.
+- **Workflow** (for every new feature or change request):
+  1. Analyze the request — identify ambiguities
+  2. Ask clarifying questions (follow RULE-ASK) — scope, priorities, edge cases, acceptance criteria
+  3. Check existing docs — PRD, architecture, epics for fit
+  4. Update PRD — if new product requirements are introduced
+  5. Write stories — concrete, testable, with acceptance criteria. Add to existing or new epic.
+  6. Write execution prompt in `.ai/prompts/` for a developer persona
+  7. Hand off — work moves to developer only after stories are written and approved
 - **Principles**:
-  - Never skip requirements analysis. "Build X" is not a story — it needs acceptance criteria.
-  - Ask questions early. Rework from bad assumptions costs more than a 2-minute clarification.
-  - Stories must be testable. Each story should have a clear "done" state.
-  - Keep the PRD as the single source of truth for what the product should do.
-  - Update docs before handing off — the developer persona should never need to guess intent.
+  - "Build X" is not a story. Every story needs acceptance criteria.
+  - Ask questions early. Bad assumptions cause expensive rework.
+  - Stories must be testable with a clear "done" state.
+  - PRD is the single source of truth for product requirements.
+  - Update docs before handing off. Developers must never guess intent.
 
-Then create additional personas that match the project's tech stack. Examples:
-- `data-engineer.md` — for data pipeline / ETL work
-- `frontend-dev.md` — for UI / website work. **Must include an "Accessibility Validation" section** in the persona's workflow with rules covering: semantic HTML (correct elements, no `<div>`/`<span>` for interactive controls), keyboard navigation (Tab/Shift+Tab/Enter/Space/Escape, logical tab order), ARIA attributes (use only when semantic HTML is insufficient — no ARIA is better than bad ARIA), color contrast (WCAG 2.1 AA: 4.5:1 normal text, 3:1 large text), screen reader compatibility (alt text, heading hierarchy, `aria-live` for dynamic content), focus management (modal focus trap, return focus on close, route-change focus), form accessibility (associated `<label>` elements, linked error messages, `aria-required`), and automated checks (eslint-plugin-jsx-a11y, axe-core, Lighthouse, or equivalent). Every frontend story must pass this validation before it can be marked complete.
-- `backend-dev.md` — for API / server work
-- `reviewer.md` — for code review and QA
-- `devops.md` — for CI/CD and deployment
-- `mobile-dev.md` — for mobile app work
+### 4.2 Developer Personas
 
-Only create personas that are relevant to this project's tech stack and workflow.
+Create personas matching the tech stack. Options (only create what's relevant):
+- `frontend-dev.md` — UI/website. MUST include RULE-A11Y as a mandatory workflow section.
+- `backend-dev.md` — API/server work
+- `data-engineer.md` — data pipeline/ETL
+- `reviewer.md` — code review and QA
+- `devops.md` — CI/CD and deployment
+- `mobile-dev.md` — mobile app work
 
-**On repeat run — persona update rules:**
-- **Read every existing persona** before creating or modifying.
-- **Update commands**: If the project's build/dev/test commands changed, update the "Key commands" section in each relevant persona.
-- **Update principles**: If new architectural decisions were made (visible in architecture.md or git history), add relevant principles.
-- **Add personas**: If the project now has a new type of work (e.g., mobile app added, CI/CD pipeline added) not covered by any persona, create a new one.
-- **Don't remove personas**: Even if a persona seems unused, keep it — the user may have created it intentionally.
-- **Don't overwrite custom content**: If a persona has sections or principles not in the template (user-added), preserve them.
+**REPEAT RUN**: Read every existing persona first. Update "Key commands" if commands changed. Update "Principles" if new architectural decisions exist. Add new personas for uncovered work types. Do NOT remove personas. Do NOT overwrite user-added content.
 
-### 5. Execution Prompts — `.ai/prompts/`
+**Deliverable**: `.ai/personas/*.md` files.
+**Checkpoint**: List personas created before proceeding.
 
-If there are any task prompts, build instructions, or phase prompts in the repository (check root for files like `PROMPT_*.md`, `TASK_*.md`, etc.), move them into `.ai/prompts/` and replace the originals with pointer files saying where they moved to.
+=== PHASE 4 COMPLETE. Proceed to Phase 5. ===
 
-If the project has obvious future work (from TODOs, issues, or incomplete features), create a prompt for the next logical phase with:
-- Context section (what to read first)
-- Pre-requisites (what must be done before)
-- Numbered task list with acceptance criteria
-- Validation steps (how to verify the work is done)
+---
 
-**On repeat run — prompt update rules:**
-- **Check root again** for new `PROMPT_*.md` or `TASK_*.md` files that appeared since last run. Move them in.
-- **Update existing prompts**: If a prompt's pre-requisites are now met (the phase before it is complete), update the context section to reflect that.
-- **Don't overwrite prompts**: Existing prompts may have been hand-edited with specific instructions. Read them fully before modifying. Only update factual references (file paths, command names) that changed.
-- **Create next-phase prompt**: If the most recent planned epic now has stories but no corresponding prompt, create one.
+=== PHASE 5: PROMPTS & GUIDELINES UPDATE ===
 
-### 6. Update `.ai/guidelines.md`
+### 5.1 Execution Prompts — `.ai/prompts/`
 
-**On first run**: Add a "Documentation Framework" section near the top of `guidelines.md` that lists the key documents, and add the "Agent Workflow Rules" section.
+IF prompt files exist in repo root (`PROMPT_*.md`, `TASK_*.md`):
+- Move them to `.ai/prompts/`
+- Replace originals with: "Moved to `.ai/prompts/[filename]`"
 
-**On repeat run**: Read the existing guidelines.md fully. Only update if:
-- New docs/epics/personas/prompts were created (update the document list)
-- Commands changed (update the commands sections)
-- New conventions were introduced (add to conventions section)
-- The "Agent Workflow Rules" section is missing or incomplete (add/fix it)
-Do NOT rewrite sections that are already accurate. Do NOT remove custom content the user added.
+IF the project has obvious future work (TODOs, issues, incomplete features):
+- Create a prompt for the next logical phase:
+  - Context section (what to read first)
+  - Pre-requisites (what must be done before)
+  - Numbered task list with acceptance criteria
+  - Validation steps
 
-The "Documentation Framework" section should list the key documents:
-- PRD, Architecture, Data Dictionary (under docs/)
-- Epics (under epics/)
-- Personas (under personas/)
-- Prompts (under prompts/)
+**REPEAT RUN**: Check root for new prompt files and move them. Update existing prompts only if factual references changed. Do NOT overwrite hand-edited prompts. Create next-phase prompt if newest planned epic has stories but no prompt.
+
+### 5.2 Update `.ai/guidelines.md`
+
+Add or update these two sections:
+
+**"Documentation Framework" section** (near the top):
+- List key docs: PRD, Architecture, Data Dictionary (under docs/)
+- Epics (under epics/), Personas (under personas/), Prompts (under prompts/)
 - Link to `.ai/README.md` for full details
 
-The "Agent Workflow Rules" section should contain these mandatory rules for every agent:
+**"Agent Workflow Rules" section** with this exact content:
 
-**Communication principle (applies to ALL phases below):**
-On every important decision — architectural choices, scope trade-offs, ambiguous requirements, multiple valid approaches — **stop and ask the user before proceeding**. Present the alternatives with pros/cons and a clear recommendation. Never silently pick an option when the choice materially affects the outcome. This applies during requirements analysis, implementation, code review, and any other phase. Silent assumptions are the most expensive kind of rework.
+```
+## Agent Workflow Rules
 
 **Before starting work:**
-1. Read guidelines (this file)
-2. Read the relevant docs (PRD, architecture, data dictionary as needed)
-3. Adopt the matching persona from `.ai/personas/`
+1. Read this file (guidelines.md)
+2. Read relevant docs (PRD, architecture, data dictionary as needed)
+3. Follow RULE-PERSONA — output persona header before any task
 4. Check epics to understand current status
 
-**For new features or change requests — use the Product Owner persona first:**
-5. Adopt `.ai/personas/product-owner.md`
-6. Analyze the request, ask clarifying questions
-7. Write/update PRD, create stories in epics, write execution prompts
-8. Only then switch to a developer persona to implement
+**For new features or change requests:**
+5. Follow RULE-PO-GATE — Product Owner must complete analysis first
+6. After PO hand-off, switch to developer persona to implement
 
-**During implementation work:**
-9. If task management MCP tools are available (Jira, Asana, Linear, etc.), use them to read assigned tasks and update status
-10. Follow the epic's story checklist
-11. **Ask before you assume** — when facing important decisions (architectural choices, scope trade-offs, ambiguous requirements, multiple valid approaches), stop and ask the user. Present the options with pros/cons and a recommendation rather than silently picking one.
+**During implementation:**
+7. Use task management MCP tools if available to read tasks and update status
+8. Follow the epic's story checklist
+9. Follow RULE-ASK on every important decision
 
-**Accessibility validation (mandatory for all frontend work):**
-12. Follow the accessibility validation rules defined in the relevant frontend persona (e.g., `.ai/personas/frontend-dev.md`). No frontend story is complete until it passes validation.
+**Frontend work:**
+10. Follow RULE-A11Y. No frontend story is complete without passing it.
 
-**Self Code Review (mandatory for all developers before completing work):**
-Every developer must perform a self code review before marking any story or task as complete. This catches issues early and ensures alignment with project standards.
-13. **Coding standards** — review your changes against the project's conventions (naming, file organization, patterns documented in guidelines). Fix any deviations.
-14. **Code quality** — check for dead code, unused imports, console.log statements, hardcoded values, duplicated logic, and overly complex functions. Simplify where possible.
-15. **Error handling** — verify that edge cases are handled, error states are surfaced to the user, and no errors are silently swallowed.
-16. **Security** — check for injection vulnerabilities (XSS, SQL injection), exposed secrets, and unsafe data handling. Sanitize user input at system boundaries.
-17. **Readability** — ensure code is understandable without explanation. If a block of logic is not self-evident, add a brief comment explaining *why* (not *what*).
-18. **Diff review** — run `git diff` and read through every changed line as if reviewing someone else's code. Look for accidental changes, leftover debug code, and unintended side effects.
+**Before marking any task complete:**
+11. Follow RULE-SELF-REVIEW.
 
 **After completing work:**
-19. Update the epic — mark completed stories as `[x]`, change status if all done
-20. Update architecture/data-dictionary docs if you made structural changes
-21. Update guidelines if you introduced new commands or conventions
-22. Log known issues discovered during work to the relevant epic
-23. Create follow-up epics if your work revealed new work to be done
+12. Update epic — mark completed stories `[x]`, update status
+13. Update architecture/data-dictionary if structural changes were made
+14. Update guidelines if new commands or conventions introduced
+15. Log known issues to relevant epic
+16. Create follow-up epics if new work was discovered
+```
 
-These rules ensure documentation stays current and no agent starts from scratch.
+**REPEAT RUN**: Read existing guidelines.md fully. Only update outdated or incomplete sections. Do NOT rewrite accurate sections. Do NOT remove user-added content.
 
-### Rules
+**Deliverable**: Updated prompt files and guidelines.md.
+**Checkpoint**: List changes made.
 
-- **Analyze, don't invent**: Every document should reflect what actually exists in the codebase. Don't add fictional features, fake metrics, or aspirational requirements.
-- **Git history is ground truth**: Use `git log` to verify what's been built, what order things happened, and what's complete. Code speaks louder than comments.
-- **Cross-reference task management**: If MCP tools for Jira/Asana/Linear/etc. are available, pull real ticket data into epics. If not, reconstruct from git history + code analysis.
-- **Be specific**: Reference actual file paths, actual tech stack versions, actual commands.
-- **Keep it concise**: Each document should be readable in under 2 minutes. No boilerplate filler.
-- **Use checklists**: For epics and stories, use `- [x]` (done) and `- [ ]` (not done) format.
-- **TypeScript for schemas**: When documenting data structures, use TypeScript interface notation.
-- **Docs are living documents**: The framework prompt creates initial docs, but agents must keep them updated. Stale docs are worse than no docs.
-- **Ask questions, propose alternatives**: On every important decision — architecture, scope, trade-offs, ambiguous requirements — ask the user before proceeding. Present options with pros/cons and a recommendation. Silent assumptions are the most expensive kind of rework.
-- **Product Owner gates implementation**: No epic should move to IN_PROGRESS without stories and acceptance criteria written by the product owner persona.
-- **Accessibility is not optional**: Every frontend story must pass the accessibility validation defined in the frontend persona before it can be marked complete. Accessibility debt is treated the same as a bug — it blocks completion.
-- **Self code review before done**: Every developer must review their own changes against coding standards and quality checks before marking work as complete. No story moves to done without a self-review pass.
+=== PHASE 5 COMPLETE. Proceed to Phase 6. ===
 
-### 7. Output a Change Summary
+---
 
-After completing all steps, output a summary table:
+=== PHASE 6: SELF-IMPROVEMENT AUDIT (mandatory on every run) ===
+
+### 6.1 Drift Detection
+For each document in `.ai/docs/` and `.ai/epics/`:
+- Compare claims against actual codebase state
+- List inconsistencies (outdated paths, missing features, wrong versions)
+- Rate: `NONE` | `LOW` (cosmetic) | `HIGH` (factual error)
+
+### 6.2 Completeness Check
+- [ ] Every source directory mentioned in architecture.md
+- [ ] Every dependency (package.json, requirements.txt, go.mod, etc.) in tech stack
+- [ ] Every epic's checklist matches implementation state (verify via git log)
+- [ ] Every persona's "Key commands" matches available commands
+- [ ] Named rules (RULE-ASK, RULE-A11Y, RULE-SELF-REVIEW, RULE-PERSONA, RULE-PO-GATE) referenced in guidelines.md
+
+### 6.3 Prompt Effectiveness Review
+For each `.ai/prompts/*.md`:
+- Flag prompts referencing nonexistent files, epics, or personas
+- Flag prompts with pre-requisites now met (update their status)
+
+### 6.4 Apply Fixes
+- Fix HIGH drift immediately
+- Fix LOW drift if under 5 lines
+- For structural issues (missing epics, wrong architecture), follow RULE-ASK first
+
+### 6.5 Log Changes
+Append to `.ai/CHANGELOG.md`:
+```
+## [YYYY-MM-DD]
+- [file]: [what changed and why]
+```
+IF `.ai/CHANGELOG.md` does not exist, create it.
+
+### 6.6 Cleanup
+Delete `.ai/_research.md` (temporary file from Phase 1).
+
+=== PHASE 6 COMPLETE. Proceed to Phase 7. ===
+
+---
+
+=== PHASE 7: SUMMARY ===
+
+Output a change summary table:
 
 | File | Action | What Changed |
 |------|--------|-------------|
@@ -236,5 +347,20 @@ After completing all steps, output a summary table:
 | `.ai/docs/architecture.md` | Created / Updated / Unchanged | Brief description |
 | ... | ... | ... |
 
-This helps the user verify what was done and review only the files that changed.
-```
+=== ALL PHASES COMPLETE ===
+
+---
+
+## Rules
+
+- **Analyze, don't invent**: Every document must reflect what actually exists. No fictional features or aspirational requirements.
+- **Git history is ground truth**: Use `git log` to verify what's built and complete.
+- **Cross-reference task management**: Use MCP tool data if available. Otherwise reconstruct from git + code.
+- **Be specific**: Actual file paths, actual versions, actual commands.
+- **Maximum 200 lines per document**.
+- **Use checklists**: `- [x]` done, `- [ ]` not done.
+- **TypeScript for schemas**: Use TypeScript interface notation for data structures.
+- **Product Owner gates implementation**: RULE-PO-GATE is mandatory.
+- **Accessibility is not optional**: Frontend stories must pass RULE-A11Y.
+- **Self-review before done**: RULE-SELF-REVIEW is mandatory for all developers.
+````
