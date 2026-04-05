@@ -334,16 +334,21 @@ Common rule categories (include only those relevant to this project):
 - External HTTP calls must include a timeout
 - Dockerfile should use non-root user
 
-### Step 2: Add Security Rules Section to Guidelines
+### Step 2: Create Dedicated Security Rules File
 
-If the project has an AI guidelines file (e.g., `.ai/guidelines.md`, `CLAUDE.md`, `AGENTS.md`), add a **Security Rules** section with the identified rules. Also add a non-negotiable critical rule referencing the security checklist.
-
-### Step 3: Add Security Checklist to Self-Review / Pre-Commit
-
-Add a **Security Checklist** to the project's self-review or pre-commit checklist (if one exists). This is a quick list of items every developer (human or AI) should verify before completing any task:
+Create `.ai/docs/security-rules.md` as the **single source of truth** for all security rules. Structure it with categorized rules (Credentials, SQL Injection, Auth, Data Isolation, Logging, HTTP, Templates) followed by a runnable checklist.
 
 ```
-#### Security Checklist (run for every code change)
+# Security Rules
+
+> Single source of truth for all security rules. Referenced from guidelines.md, personas, and agent-workflow.md.
+
+## Credentials & Secrets
+- No hardcoded credentials in source code — use env vars / secret management
+- Never commit .env files
+...
+
+## Security Checklist (run for every code change)
 - [ ] No hardcoded credentials, API keys, tokens, or passwords in source code
 - [ ] All database queries use parameter binding — no string interpolation with user input
 - [ ] All new queries include tenant scoping (if multi-tenant)
@@ -356,15 +361,36 @@ Add a **Security Checklist** to the project's self-review or pre-commit checklis
 - [ ] Template engines use escaped output for user data
 ```
 
-Adapt this checklist to the project's specific tech stack and patterns.
+Adapt the rules and checklist to the project's specific tech stack and patterns.
 
-### Step 4: Update Code Review Process
+### Step 3: Update Guidelines Routing Table
 
-If the project has a code review prompt, checklist, or reviewer persona, add security as a review criterion with the same checklist items.
+Add a security entry to the routing table in `.ai/guidelines.md`:
+
+| File | Trigger |
+|------|---------|
+| `docs/security-rules.md` | Before completing any task (mandatory security checklist) |
+
+Also add a critical rule in the Critical Rules section referencing the security checklist:
+```
+N. **Security checklist** — run the checklist in docs/security-rules.md before completing any task.
+```
+
+**Do NOT duplicate the full security rules in guidelines.md** — keep only the critical rule + routing entry. The detailed rules live in `docs/security-rules.md`.
+
+### Step 4: Update Code Review Personas & Workflow
+
+If the project has code review personas or an agent-workflow file:
+- Add a pointer to `docs/security-rules.md` (e.g., "Read and run the Security Checklist from docs/security-rules.md")
+- **Do NOT duplicate the full checklist** in personas — reference the single source
 
 ### Step 5: Reference the Audit
 
-Add a note in the guidelines pointing to `.ai/audits/security-triage-decisions.md` as the authoritative record of security decisions, so future audits and reviews can reference it.
+Add a routing table entry in `guidelines.md` for the triage decisions file:
+
+| File | Trigger |
+|------|---------|
+| `audits/security-triage-decisions.md` | Security review — issues marked ACCEPTED_RISK must not be re-raised unless re-evaluation conditions are met |
 ````
 
 ---

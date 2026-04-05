@@ -244,52 +244,66 @@ IF the project has obvious future work (TODOs, issues, incomplete features):
 
 **REPEAT RUN**: Check root for new prompt files and move them. Update existing prompts only if factual references changed. Do NOT overwrite hand-edited prompts. Create next-phase prompt if newest planned epic has stories but no prompt.
 
-### 5.2 Update `.ai/guidelines.md`
+### 5.2 Update `.ai/agent-workflow.md`
 
-Add or update these two sections:
+Create or update `.ai/agent-workflow.md` with the full agent session workflow. This file is separate from `guidelines.md` to prevent guidelines bloat — `guidelines.md` stays lean as a routing table, while workflow details live here.
 
-**"Documentation Framework" section** (near the top):
-- List key docs: PRD, Architecture, Data Dictionary (under docs/)
-- Epics (under epics/), Personas (under personas/), Prompts (under prompts/)
-- Link to `.ai/README.md` for full details
-
-**"Agent Workflow Rules" section** with this exact content:
+**Content for `agent-workflow.md`:**
 
 ```
-## Agent Workflow Rules
+# Agent Workflow Rules
 
-**Before starting work:**
-1. Read this file (guidelines.md)
-2. Read relevant docs (PRD, architecture, data dictionary as needed)
-3. Follow RULE-PERSONA — output persona header before any task
-4. Check epics to understand current status
+## Communication Principle
+On every important decision — architectural choices, scope trade-offs, ambiguous requirements, multiple valid approaches — stop and ask the user. Present alternatives with pros/cons. Never silently pick an option. (RULE-ASK)
 
-**For new features or change requests:**
-5. Follow RULE-PO-GATE — Product Owner must complete analysis first
-6. After PO hand-off, switch to developer persona to implement
+## Before starting work:
+1. Read guidelines.md — critical rules and routing table
+2. Read conventions.md — if you will write or modify code
+3. Read relevant docs from the routing table based on your task
+4. Follow RULE-PERSONA — adopt a persona before any task
+5. Check epics to understand current status
 
-**During implementation:**
-7. Use task management MCP tools if available to read tasks and update status
-8. Follow the epic's story checklist
-9. Follow RULE-ASK on every important decision
+## For new features or change requests:
+6. Follow RULE-PO-GATE — Product Owner must complete analysis first
+7. After PO hand-off, switch to developer persona to implement
 
-**Frontend work:**
-10. Follow RULE-A11Y. No frontend story is complete without passing it.
+## During implementation:
+8. Use task management MCP tools if available to read tasks and update status
+9. Follow the epic's story checklist
+10. Follow RULE-ASK on every important decision
 
-**Before marking any task complete:**
-11. Follow RULE-SELF-REVIEW.
+## Frontend work:
+11. Follow RULE-A11Y. No frontend story is complete without passing it.
 
-**After completing work:**
-12. Update epic — mark completed stories `[x]`, update status
-13. Update architecture/data-dictionary if structural changes were made
-14. Update guidelines if new commands or conventions introduced
-15. Log known issues to relevant epic
-16. Create follow-up epics if new work was discovered
+## Before marking any task complete:
+12. Follow RULE-SELF-REVIEW.
+
+## After completing work:
+13. Update epic — mark completed stories [x], update status
+14. Update architecture/data-dictionary if structural changes were made
+15. Update conventions if new commands or conventions introduced
+16. Log known issues to relevant epic
+17. Create follow-up epics if new work was discovered
 ```
 
-**REPEAT RUN**: Read existing guidelines.md fully. Only update outdated or incomplete sections. Do NOT rewrite accurate sections. Do NOT remove user-added content.
+### 5.3 Update `.ai/guidelines.md`
 
-**Deliverable**: Updated prompt files and guidelines.md.
+Update the routing table in `guidelines.md` to include all new files created by this framework. Add entries for:
+- `agent-workflow.md` — Starting a new session or task
+- `docs/prd.md` — When you need product context or feature scope
+- `docs/architecture.md` — Working across apps/libs or adding services
+- `docs/data-dictionary.md` — Working with entities, queries, or migrations
+- `epics/epic-*.md` — Always find the epic matching your feature area
+- `personas/*.md` — Always adopt the persona matching your task
+- `prompts/*.md` — Before starting a major task, check for an existing prompt
+
+IF `guidelines.md` has a "Domain Critical Rules" section, add 1-2 line rules for any new domain docs created.
+
+**IMPORTANT: Do NOT add detailed workflow rules, conventions, or domain rules to `guidelines.md`.** That file must stay under ~100 lines as a lean entry point. Detailed content belongs in topic files.
+
+**REPEAT RUN**: Read existing files fully. Only update outdated or incomplete sections. Do NOT rewrite accurate sections. Do NOT remove user-added content.
+
+**Deliverable**: Updated prompt files, agent-workflow.md, and guidelines.md routing table.
 **Checkpoint**: List changes made.
 
 === PHASE 5 COMPLETE. Proceed to Phase 6. ===
@@ -309,7 +323,10 @@ For each document in `.ai/docs/` and `.ai/epics/`:
 - [ ] Every dependency (package.json, requirements.txt, go.mod, etc.) in tech stack
 - [ ] Every epic's checklist matches implementation state (verify via git log)
 - [ ] Every persona's "Key commands" matches available commands
-- [ ] Named rules (RULE-ASK, RULE-A11Y, RULE-SELF-REVIEW, RULE-PERSONA, RULE-PO-GATE) referenced in guidelines.md
+- [ ] Named rules (RULE-ASK, RULE-A11Y, RULE-SELF-REVIEW, RULE-PERSONA, RULE-PO-GATE) referenced in agent-workflow.md
+- [ ] guidelines.md routing table includes all `.ai/docs/` and `.ai/epics/` files
+- [ ] guidelines.md is under ~100 lines (lean router, not a reference manual)
+- [ ] No single `.ai/` file exceeds ~500 lines
 
 ### 6.3 Prompt Effectiveness Review
 For each `.ai/prompts/*.md`:
@@ -357,7 +374,8 @@ Output a change summary table:
 - **Git history is ground truth**: Use `git log` to verify what's built and complete.
 - **Cross-reference task management**: Use MCP tool data if available. Otherwise reconstruct from git + code.
 - **Be specific**: Actual file paths, actual versions, actual commands.
-- **Maximum 200 lines per document**.
+- **Maximum 200 lines per document** (epics, personas, prompts). Technical reference docs may be longer but should not exceed ~500 lines.
+- **Prevent guidelines bloat**: `guidelines.md` is a lean router (~60-100 lines) with critical rules and a routing table. Detailed content goes in topic files (`conventions.md`, `agent-workflow.md`, `docs/*.md`). If a topic grows large, split it. Each topic file must have its own "Critical Rules" section at the top.
 - **Use checklists**: `- [x]` done, `- [ ]` not done.
 - **TypeScript for schemas**: Use TypeScript interface notation for data structures.
 - **Product Owner gates implementation**: RULE-PO-GATE is mandatory.
